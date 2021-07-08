@@ -1,6 +1,7 @@
 from cryptography.fernet import Fernet
 from hashlib import pbkdf2_hmac
 from pathlib import Path
+from base64 import urlsafe_b64encode
 from . import config
 
 class Manager:
@@ -17,26 +18,26 @@ class Manager:
         if self.keyFileExists():
             raise FileExistsError("The key file already exits, replacing it will cause loss of data. Key generation has been aborted.")
         else:
-            password_enc = password.encode()                                    # password_encoded
-            salt_enc = salt.encode()                                            # salt_encoded
-            dec_k = pbkdf2_hmac('sha256', password_enc, salt_enc, 100000)       # decryption_key
-            encr_key = Fernet.generate_key()                                    # encrypting_key
-            key_encryptor = Fernet(dec_k)                                       # key_encryptor
-            key_encr = key_encryptor.encrypt(encr_key).decode("utf-8")          # key_encrypted
+            password_enc = urlsafe_b64encode(password.encode())                                     # password_encoded
+            salt_enc = urlsafe_b64encode(salt.encode())                                             # salt_encoded
+            dec_k = urlsafe_b64encode(pbkdf2_hmac('sha256', password_enc, salt_enc, 100000))        # decryption_key
+            encr_key = Fernet.generate_key()                                                        # encrypting_key
+            key_encryptor = Fernet(dec_k)                                                           # key_encryptor
+            key_encr = key_encryptor.encrypt(encr_key).decode("utf-8")                              # key_encrypted
             with open(config.key_path, "w") as file:
                 file.write(key_encr)
     
     def setInstancePassword(self, password: str):
-        self.password = password.encode()
+        self.password = urlsafe_b64encode(password.encode())
     
     def setInstanceSalt(self, salt: str):
-        self.salt = salt.encode()
+        self.salt = urlsafe_b64encode(salt.encode())
 
     def readKey(self):
         with open(config.key_path, "r") as file:
             if self.password == None: raise RuntimeError("Password is not set.")
             if self.salt == None: raise RuntimeError("Salt is not set.")
-            encr_key_key = pbkdf2_hmac("sha256", self.password, self.salt, 100000)
+            encr_key_key = urlsafe_b64encode(pbkdf2_hmac("sha256", self.password, self.salt, 100000))
             key_decryptor = Fernet(encr_key_key)
             key_encr = file.read()
             encr_key = key_decryptor.decrypt(key_encr.encode()).decode("utf-8")
@@ -54,21 +55,31 @@ class Manager:
     def storeData(self, value: str, index: int):
         if self.encrypted_data == None: self.refreshData()
         if index > self.data_lines: raise IndexError("Write index greater than last line.")
+
         value_enc = value.encode()
         encr_value = self.f.encrypt(value_enc)
         encr_value_dec = encr_value.decode("utf-8")
-        self.encrypted_data[index] = encr_value_dec + "\n"
+
+        if index == self.data_lines: 
+            self.encrypted_data.append(encr_value_dec + "\n")
+            self.decrypted_data.append(value)
+            self.data_lines += 1
+        else: 
+            self.encrypted_data[index] = encr_value_dec + "\n"
+            self.decrypted_data[index] = value
+
         with open(config.storage_path, "w") as file:
             file.writelines(self.encrypted_data)
 
     def refreshData(self):
         if not self.storageFileExists():
-            raise FileNotFoundError("Storage file not found")
-        else:
-            with open(config.storage_path, "r") as file:
-                self.encrypted_data = file.readlines()
-                self.data_lines = len(self.encrypted_data)
-                self.decrypted_data = [None] * self.data_lines
+            # raise FileNotFoundError("Storage file not found")
+            with open(config.storage_path, "w") as file:
+                pass
+        with open(config.storage_path, "r") as file:
+            self.encrypted_data = file.readlines()
+            self.data_lines = len(self.encrypted_data)
+            self.decrypted_data = [None] * self.data_lines
 
     def decryptData(self):
         if self.key == None: self.readKey()
@@ -79,8 +90,12 @@ class Manager:
     def changePassword(self, newPassword, newSalt):
         if self.key == None:
             self.readKey()
-        newKey_encryptor_key = pbkdf2_hmac("sha256", newPassword, newSalt, 100000)
+        newPassword_enc = urlsafe_b64encode(newPassword.encode())
+        newSalt_enc = urlsafe_b64encode(newSalt.encode())
+        newKey_encryptor_key = urlsafe_b64encode(pbkdf2_hmac("sha256", newPassword_enc, newSalt_enc, 100000))
         newKey_encryptor = Fernet(newKey_encryptor_key)
         encr_newKey = newKey_encryptor.encrypt(self.key.encode()).decode()
         with open(config.key_path, "w") as file:
             file.write(encr_newKey)
+        self.setInstancePassword(newPassword)
+        self.setInstanceSalt(newSalt)
