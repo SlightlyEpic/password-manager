@@ -2,7 +2,7 @@ from cryptography.fernet import Fernet
 from hashlib import pbkdf2_hmac
 from pathlib import Path
 from base64 import urlsafe_b64encode
-from . import config
+import config
 
 class Manager:
     def __init__(self):
