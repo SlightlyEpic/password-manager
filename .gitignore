@@ -112,3 +112,8 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Key and storage files generate by the program
+secret.key
+storage1.dat
+storage2.dat
