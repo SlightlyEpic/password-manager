@@ -100,3 +100,13 @@ class Manager:
             file.write(encr_newKey)
         self.setInstancePassword(newPassword)
         self.setInstanceSalt(newSalt)
+    
+    def popRow(self, index: int):
+        if self.encrypted_data == None: self.refreshData()
+        if index > self.data_lines: raise IndexError("Pop index greater than last line.")
+
+        self.encrypted_data.pop(index)
+        self.decrypted_data.pop(index)
+        self.data_lines -= 1
+        with open(self.storage_path, "w") as file:
+            file.writelines(self.encrypted_data)
