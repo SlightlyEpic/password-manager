@@ -117,3 +117,9 @@ dmypy.json
 secret.key
 storage1.dat
 storage2.dat
+
+# Other files
+TODO.txt
+
+# VSCode config files
+.vscode
