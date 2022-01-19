@@ -1,9 +1,10 @@
 # IMPORTS
 #######################################################################
+from multiprocessing import Manager
 import tkinter as Tk
-import tkinter.constants as TkC
 from cryptography.fernet import InvalidToken
 from modules.manager import Manager
+from PIL import ImageTk, Image
 #######################################################################
 
 
@@ -11,8 +12,12 @@ from modules.manager import Manager
 
 # INITIALIZATION
 #######################################################################
-e_man = Manager("./storage1.dat", "./secret.key")
-p_man = Manager("./storage2.dat", "./secret.key")
+e_man = Manager("./store/storage1.dat", "./store/secret.key")
+p_man = Manager("./store/storage2.dat", "./store/secret.key")
+
+logo_img = None     # This needs to be global to avoid being garbage collected
+
+palette = ['#113859', '#1C588C', '#174873', '#6D8BA6', '#6D8BA6', '#9CCCFF']
 #######################################################################
 
 
@@ -21,31 +26,86 @@ p_man = Manager("./storage2.dat", "./secret.key")
 # TKINTER GUI
 #######################################################################
 def main():
+    global logo_img
+
+    # Create window
+    root = Tk.Tk()
+    root.resizable(0,0)
+    root.configure(bg=palette[0])
+
     if not e_man.keyFileExists():
         # Show page to generate key
-        #
-        #
-        #
-        #
 
-        # Close window
-        # main()
-        pass
-    else:
-        # Create window
-        root = Tk.Tk()
-        root.geometry('360x90')
-        root.title('Login')
-        root.resizable(0,0)
-        root.configure(bg='#002766')
+        root.title('First time login')
+        root.geometry('400x200')
+
+        def keyGenHandler(pwd, pwd_confirm, pin, pin_confirm):
+            if(pwd == pwd_confirm and pin == pin_confirm):
+                if(pwd != "" and pin != ""):
+                    # Clear storage files just for safety
+                    s1 = open('./store/storage1.dat', 'w')
+                    s1.close()
+                    s2 = open('./store/storage2.dat', 'w')
+                    s2.close()
+
+                    # Gen key
+                    e_man.genKey(pwd, pin)
+
+                    # Destroy current window
+                    root.destroy()
+
+                    # Restart
+                    main()
+                    return
+                else:
+                    win_elements['alert_label'].configure(text='Password/Pin cannot be empty')
+            else:
+                win_elements['alert_label'].configure(text='Password/Pin and Confirmed\nPassword/Pin does not match')
 
         # Initialize window elements
         win_elements = {
-            "label_pwd": Tk.Label(root, text='Password :',font=('TkTextFont',10), padx=5, pady=5),
-            "label_pin": Tk.Label(root, text='    PIN :    ',font=('TkTextFont',10), padx=5, pady=5),
+            "label_pwd": Tk.Label(root, text='Password :', font=('TkTextFont',10), padx=5, pady=5, bg=palette[0], fg='white'),
+            "label_pin": Tk.Label(root, text='    PIN :    ', font=('TkTextFont',10), padx=5, pady=5, bg=palette[0], fg='white'),
+            "label_pwd_confirm": Tk.Label(root, text='Confirm Password :', font=('TkTextFont',10), padx=5, pady=5, bg=palette[0], fg='white'),
+            "label_pin_confirm": Tk.Label(root, text='   Confirm PIN :    ', font=('TkTextFont',10), padx=5, pady=5, bg=palette[0], fg='white'),
+            "entry_box_pwd": Tk.Entry(root, show='\u2022', width=40),
+            "entry_box_pwd_confirm": Tk.Entry(root, show='\u2022', width=40),
+            "entry_box_pin": Tk.Entry(root, show='\u2022', width=40),
+            "entry_box_pin_confirm": Tk.Entry(root, show='\u2022', width=40),
+            "generate_button": Tk.Button(
+                root, text='Generate Key', font=('TkTextFont', 10), bg=palette[4], fg='white', width=10,
+                command=lambda: keyGenHandler(
+                    win_elements["entry_box_pwd"].get(), win_elements["entry_box_pwd_confirm"].get(),
+                    win_elements["entry_box_pin"].get(), win_elements["entry_box_pin_confirm"].get()
+                    )
+                ),
+            "alert_label": Tk.Label(root, text='', font=('TkTextFont',10), width=30, bg=palette[0], fg='red')
+        }
+
+        # Position window elements
+        win_elements["label_pwd"].grid(row=0, column=0)
+        win_elements["label_pwd_confirm"].grid(row=1, column=0)
+        win_elements["label_pin"].grid(row=2, column=0)
+        win_elements['label_pin_confirm'].grid(row=3, column=0)
+        win_elements["entry_box_pwd"].grid(row=0, column=1)
+        win_elements['entry_box_pwd_confirm'].grid(row=1, column=1)
+        win_elements["entry_box_pin"].grid(row=2, column=1)
+        win_elements['entry_box_pin_confirm'].grid(row=3, column=1)
+        win_elements["generate_button"].grid(row=5, column=1)
+        win_elements["alert_label"].grid(row=6, column=1)
+
+    else:
+        root.geometry('360x90')
+        root.title('Login')
+
+        # Initialize window elements
+        win_elements = {
+            "label_pwd": Tk.Label(root, text='Password :', font=('TkTextFont',10), padx=5, pady=5, bg=palette[0], fg='white'),
+            "label_pin": Tk.Label(root, text='    PIN :    ', font=('TkTextFont',10), padx=5, pady=5, bg=palette[0], fg='white'),
             "entry_box_pwd": Tk.Entry(root, show='\u2022', width=40),
             "entry_box_pin": Tk.Entry(root, show='\u2022', width=40),
-            "ok_button": Tk.Button(root, text='OK', font=('TkTextFont', 10), fg='blue', width=5, command=lambda: login(win_elements["entry_box_pwd"].get(), win_elements["entry_box_pin"].get()))
+            "ok_button": Tk.Button(root, text='OK', font=('TkTextFont', 10), bg=palette[4], fg='white', width=5, command=lambda: login(win_elements["entry_box_pwd"].get(), win_elements["entry_box_pin"].get())),
+            "alert_label": Tk.Label(root, text='', font=('TkTextFont',10), bg=palette[0], fg='red')
         }
 
         # Position window elements
@@ -54,6 +114,7 @@ def main():
         win_elements["entry_box_pwd"].grid(row=1,column=2)
         win_elements["entry_box_pin"].grid(row=2,column=2)
         win_elements["ok_button"].grid(row=3,column=2)
+        win_elements["alert_label"].grid(row=3, column=1)
 
         def checkCredentials(password, pin):
             e_man.setInstancePassword(password)
@@ -82,30 +143,33 @@ def main():
                 element_list[i].destroy()
 
         def login(password, pin):
+            global logo_img
 
             if not checkCredentials(password, pin):
                 # Login failed due to invalid credentials
 
                 # Show login failed text
-                print("login failed")
-                #
-                #
-                #
+                win_elements['alert_label'].configure(text="Login failed")
 
-                pass
             else:
                 # Successful login
+
+                root.title('EncKey')
 
                 e_man.decryptData()         # Decrypt emails through key
                 p_man.decryptData()         # Decrypt passwords through key
 
-
-                root.geometry("900x720")
+                root.configure(bg=palette[2])
+                root.geometry("800x720")
                 clearWindow(win_elements)
 
-                cred_container_frame = Tk.Frame(root, height=620, width=880, bg='#FF5D5C')
-                cred_container_frame.grid(row=0, column=0)
+                cred_container_frame = Tk.Frame(root, height=620, width=880, bg=palette[1])
+                cred_container_frame.grid(row=0, column=0, sticky='nw')
                 # cred_container_frame.pack(padx=2, pady=2)
+
+                logo_img = ImageTk.PhotoImage(Image.open(("./media/logo100.png")))
+                logo_label = Tk.Label(root, height=620, width=100, image=logo_img, bg=palette[2])
+                logo_label.grid(row=0, column=1, sticky='new')
 
                 cred_fields = []            #[ [index_label1, e_entry1, p_entry1, view_button1, clipboard_button1, edit_button1, delete_button1], ..... ]
                 # Last element in cred_fields will always be the row with only the index and + button
@@ -127,7 +191,7 @@ def main():
                     # Add the last row with the + button which is used to add a new row
                     row_num2 = len(cred_fields)
 
-                    index_label = Tk.Label(cred_container_frame, text=e_man.data_lines+1 , font=('TkTextFont',10), padx=5, pady=5, width=5, bg='#FF5D5C')
+                    index_label = Tk.Label(cred_container_frame, text=e_man.data_lines+1 , font=('TkTextFont',10), padx=5, pady=5, width=5, bg=palette[0])
                     newrow_button = Tk.Button(cred_container_frame, text='➕ New Entry', width=12, bg='#9CCCFF', command=addDummyRow)
                     index_label.grid(row=row_num2, column=0)
                     newrow_button.grid(row=row_num2, column=1)
@@ -144,8 +208,8 @@ def main():
 
                     if(mode == 'Edit'):
                         toggleShowPw(row_num, '')
-                        pw.configure(state='normal')
-                        em.configure(state='normal')
+                        pw.configure(state='normal', bg="#FFAB4A")
+                        em.configure(state='normal', bg="#FFAB4A")
                         ed.configure(text='Save', bg='#11CC11')
                     elif(mode == 'Save'):
                         toggleShowPw(row_num, '*')
@@ -170,7 +234,7 @@ def main():
 
                     e_text, p_text = Tk.StringVar(), Tk.StringVar()
 
-                    index_label = Tk.Label(cred_container_frame, text=row_num+1 , font=('TkTextFont',10), padx=5, pady=5, width=5, bg='#FF5D5C')
+                    index_label = Tk.Label(cred_container_frame, text=row_num+1 , font=('TkTextFont',10), padx=5, pady=5, width=5, bg=palette[0], fg='white')
                     e_entry = Tk.Entry(cred_container_frame, textvariable=e_text , font=('TkTextFont',10), width=25, bg='#DCF2E3', highlightbackground='black', highlightthickness=2, state='readonly')
                     p_entry = Tk.Entry(cred_container_frame, textvariable=p_text, font=('TkTextFont',10), width=25, bg='#DCF2E3', highlightbackground='black', highlightthickness=2, state='readonly', show='*')
                     view_button = Tk.Button(cred_container_frame, text='👁 View', width=7, bg='#9CCCFF')
@@ -209,9 +273,9 @@ def main():
 
                     e_text, p_text = Tk.StringVar(), Tk.StringVar()
 
-                    index_label = Tk.Label(cred_container_frame, text=row_num1+1 , font=('TkTextFont',10), padx=5, pady=5, width=5, bg='#FF5D5C')
-                    e_entry = Tk.Entry(cred_container_frame, textvariable=e_text , font=('TkTextFont',10), width=25, bg='#DCF2E3', highlightbackground='black', highlightthickness=2, state='normal')
-                    p_entry = Tk.Entry(cred_container_frame, textvariable=p_text, font=('TkTextFont',10), width=25, bg='#DCF2E3', highlightbackground='black', highlightthickness=2, state='normal', show='')
+                    index_label = Tk.Label(cred_container_frame, text=row_num1+1 , font=('TkTextFont',10), padx=5, pady=5, width=5, bg=palette[0], fg='white')
+                    e_entry = Tk.Entry(cred_container_frame, textvariable=e_text , font=('TkTextFont',10), width=25, bg='#FFAB4A', highlightbackground='black', highlightthickness=2, state='normal')
+                    p_entry = Tk.Entry(cred_container_frame, textvariable=p_text, font=('TkTextFont',10), width=25, bg='#FFAB4A', highlightbackground='black', highlightthickness=2, state='normal', show='')
                     view_button = Tk.Button(cred_container_frame, text='👁 View', width=7, bg='#9CCCFF')
                     clipboard_button = Tk.Button(cred_container_frame, text='📋 Copy', width=7, bg='#9CCCFF', command=lambda: copyToClipboard(row_num1))
                     edit_button = Tk.Button(cred_container_frame, text='Save', width=7, bg='#11CC11', command=lambda: toggleEdit(row_num1, firstSave=True))
@@ -270,10 +334,8 @@ def main():
                 
                 #Display other utility buttons
                 
-                
-
-
-        # Mainloop
-        root.mainloop()
+    
+    # Mainloop
+    root.mainloop()
 
 main()

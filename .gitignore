@@ -114,12 +114,10 @@ dmypy.json
 .pyre/
 
 # Key and storage files generate by the program
-secret.key
-storage1.dat
-storage2.dat
+/store/secret.key
+/store/storage1.dat
+/store/storage2.dat
 
-# Other files
-TODO.txt
 
 # VSCode config files
 .vscode
