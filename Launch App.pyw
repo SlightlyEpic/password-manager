@@ -152,7 +152,7 @@ def main():
             else:
                 # Successful login
 
-                root.title('EncKey')
+                root.title('Password Manager')
 
                 e_man.decryptData()         # Decrypt emails through key
                 p_man.decryptData()         # Decrypt passwords through key
