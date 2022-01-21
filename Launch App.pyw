@@ -15,8 +15,6 @@ from PIL import ImageTk, Image
 e_man = Manager("./store/storage1.dat", "./store/secret.key")
 p_man = Manager("./store/storage2.dat", "./store/secret.key")
 
-logo_img = None     # This needs to be global to avoid being garbage collected
-
 palette = ['#113859', '#1C588C', '#174873', '#6D8BA6', '#6D8BA6', '#9CCCFF']
 #######################################################################
 
@@ -166,10 +164,6 @@ def main():
                 cred_container_frame = Tk.Frame(root, height=620, width=880, bg=palette[1])
                 cred_container_frame.grid(row=0, column=0, sticky='nw')
                 # cred_container_frame.pack(padx=2, pady=2)
-
-                logo_img = ImageTk.PhotoImage(Image.open(("./media/logo100.png")))
-                logo_label = Tk.Label(root, height=620, width=100, image=logo_img, bg=palette[2])
-                logo_label.grid(row=0, column=1, sticky='new')
 
                 cred_fields = []            #[ [index_label1, e_entry1, p_entry1, view_button1, clipboard_button1, edit_button1, delete_button1], ..... ]
                 # Last element in cred_fields will always be the row with only the index and + button
