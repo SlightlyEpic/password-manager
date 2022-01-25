@@ -1,3 +1,6 @@
+# This module handles all logic related to encryption and file handling
+# and provides easy to use methods attached to the Manager class
+
 from cryptography.fernet import Fernet
 from hashlib import pbkdf2_hmac
 from pathlib import Path
@@ -16,6 +19,7 @@ class Manager:
         self.key_path = key_path
 
     def genKey(self, password: str, salt: str):
+        """Generate a new key using the given password and salt"""
         if self.keyFileExists():
             raise FileExistsError("The key file already exits, replacing it will cause loss of data. Key generation has been aborted.")
         else:
@@ -29,12 +33,15 @@ class Manager:
                 file.write(key_encr)
     
     def setInstancePassword(self, password: str):
+        """Set the instance password in preparation of a subsequent readKey() call"""
         self.password = urlsafe_b64encode(password.encode())
     
     def setInstanceSalt(self, salt: str):
+        """Set the instance salt in preparation of a subsequent readKey() call"""
         self.salt = urlsafe_b64encode(salt.encode())
 
     def readKey(self):
+        """Read the key from the file and decrypt it using the set password and salt to obtain the actual key"""
         with open(self.key_path, "r") as file:
             if self.password == None: raise RuntimeError("Password is not set.")
             if self.salt == None: raise RuntimeError("Salt is not set.")
@@ -46,14 +53,17 @@ class Manager:
             self.f = Fernet(self.key)
 
     def keyFileExists(self):
+        """Check if the key file path is valid"""
         file_path = Path(self.key_path)
         return file_path.is_file()
 
     def storageFileExists(self):
+        """Check if the storage file path is valid"""
         file_path = Path(self.storage_path)
         return file_path.is_file()
     
     def storeData(self, value: str, index: int):
+        """Encrypt and write the data to a given line index (starts from 0) onto the storage file """
         if self.encrypted_data == None: self.refreshData()
         if index > self.data_lines: raise IndexError("Write index greater than last line.")
 
@@ -73,6 +83,7 @@ class Manager:
             file.writelines(self.encrypted_data)
 
     def refreshData(self):
+        """Read the encrypted data (and not decrypt) from the storage file"""
         if not self.storageFileExists():
             # raise FileNotFoundError("Storage file not found")
             with open(self.storage_path, "w") as file:
@@ -83,12 +94,14 @@ class Manager:
             self.decrypted_data = [None] * self.data_lines
 
     def decryptData(self):
+        """Attempt to decrypt the encrypted data"""
         if self.key == None: self.readKey()
         if self.encrypted_data == None: self.refreshData()
         for i in range(self.data_lines):
             self.decrypted_data[i] = self.f.decrypt(self.encrypted_data[i].encode()).decode()
     
     def changePassword(self, newPassword, newSalt):
+        """"Change the initial login password and salt"""
         if self.key == None:
             self.readKey()
         newPassword_enc = urlsafe_b64encode(newPassword.encode())
@@ -102,6 +115,7 @@ class Manager:
         self.setInstanceSalt(newSalt)
     
     def popRow(self, index: int):
+        """Remove a line of specified index (starts from 0) from the storage file"""
         if self.encrypted_data == None: self.refreshData()
         if index > self.data_lines: raise IndexError("Pop index greater than last line.")
 

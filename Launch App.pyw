@@ -1,10 +1,12 @@
+# This is the main application responsible for handling all logic related to
+# UI and using instances of the Manager class
+
+
 # IMPORTS
 #######################################################################
-from multiprocessing import Manager
 import tkinter as Tk
 from cryptography.fernet import InvalidToken
 from modules.manager import Manager
-from PIL import ImageTk, Image
 #######################################################################
 
 
@@ -24,8 +26,6 @@ palette = ['#113859', '#1C588C', '#174873', '#6D8BA6', '#6D8BA6', '#9CCCFF']
 # TKINTER GUI
 #######################################################################
 def main():
-    global logo_img
-
     # Create window
     root = Tk.Tk()
     root.resizable(0,0)
@@ -141,8 +141,6 @@ def main():
                 element_list[i].destroy()
 
         def login(password, pin):
-            global logo_img
-
             if not checkCredentials(password, pin):
                 # Login failed due to invalid credentials
 
@@ -232,9 +230,9 @@ def main():
                     e_entry = Tk.Entry(cred_container_frame, textvariable=e_text , font=('TkTextFont',10), width=25, bg='#DCF2E3', highlightbackground='black', highlightthickness=2, state='readonly')
                     p_entry = Tk.Entry(cred_container_frame, textvariable=p_text, font=('TkTextFont',10), width=25, bg='#DCF2E3', highlightbackground='black', highlightthickness=2, state='readonly', show='*')
                     view_button = Tk.Button(cred_container_frame, text='👁 View', width=7, bg='#9CCCFF')
-                    clipboard_button = Tk.Button(cred_container_frame, text='📋 Copy', width=7, bg='#9CCCFF', command=lambda: copyToClipboard(row_num))
-                    edit_button = Tk.Button(cred_container_frame, text='Edit', width=7, bg='#9CCCFF', command=lambda: toggleEdit(row_num))
-                    delete_button = Tk.Button(cred_container_frame, text='🗑️ Delete', width=10, bg='#CC1111', command=lambda: disintegrateRow(row_num))
+                    clipboard_button = Tk.Button(cred_container_frame, text='📋 Copy',  command=lambda: copyToClipboard(row_num), width=7, bg='#9CCCFF')
+                    edit_button = Tk.Button(cred_container_frame, text='Edit', command=lambda: toggleEdit(row_num), width=7, bg='#9CCCFF')
+                    delete_button = Tk.Button(cred_container_frame, text='🗑️ Delete', command=lambda: disintegrateRow(row_num), width=10, bg='#CC1111')
 
                     view_button.bind("<ButtonPress>", lambda e: toggleShowPw(row_num, ''))
                     view_button.bind("<ButtonRelease>", lambda e: toggleShowPw(row_num, '*'))
@@ -271,9 +269,9 @@ def main():
                     e_entry = Tk.Entry(cred_container_frame, textvariable=e_text , font=('TkTextFont',10), width=25, bg='#FFAB4A', highlightbackground='black', highlightthickness=2, state='normal')
                     p_entry = Tk.Entry(cred_container_frame, textvariable=p_text, font=('TkTextFont',10), width=25, bg='#FFAB4A', highlightbackground='black', highlightthickness=2, state='normal', show='')
                     view_button = Tk.Button(cred_container_frame, text='👁 View', width=7, bg='#9CCCFF')
-                    clipboard_button = Tk.Button(cred_container_frame, text='📋 Copy', width=7, bg='#9CCCFF', command=lambda: copyToClipboard(row_num1))
-                    edit_button = Tk.Button(cred_container_frame, text='Save', width=7, bg='#11CC11', command=lambda: toggleEdit(row_num1, firstSave=True))
-                    delete_button = Tk.Button(cred_container_frame, text='🗑️ Delete', width=10, bg='#CC1111', command=lambda: disintegrateRow(row_num1))
+                    clipboard_button = Tk.Button(cred_container_frame, text='📋 Copy', command=lambda: copyToClipboard(row_num1), width=7, bg='#9CCCFF')
+                    edit_button = Tk.Button(cred_container_frame, text='Save', command=lambda: toggleEdit(row_num1, firstSave=True), width=7, bg='#11CC11')
+                    delete_button = Tk.Button(cred_container_frame, text='🗑️ Delete', command=lambda: disintegrateRow(row_num1), width=10, bg='#CC1111')
 
                     view_button.bind("<ButtonPress>", lambda e: toggleShowPw(row_num1, ''))
                     view_button.bind("<ButtonRelease>", lambda e: toggleShowPw(row_num1, '*'))
@@ -294,7 +292,7 @@ def main():
                     # Re-add the row with + button at the end
                     row_num2 = len(cred_fields)
                     index_label = Tk.Label(cred_container_frame, text=row_num2+1 , font=('TkTextFont',10), padx=5, pady=5, width=5, bg='#FF5D5C')
-                    newrow_button = Tk.Button(cred_container_frame, text='➕ New Entry', width=12, bg='#9CCCFF', command=addDummyRow)
+                    newrow_button = Tk.Button(cred_container_frame, text='➕ New Entry', command=addDummyRow, width=12, bg='#9CCCFF')
 
                     index_label.grid(row=row_num2, column=0)
                     newrow_button.grid(row=row_num2, column=1)
@@ -320,13 +318,13 @@ def main():
                 row_num = len(cred_fields)
 
                 index_label = Tk.Label(cred_container_frame, text=e_man.data_lines+1 , font=('TkTextFont',10), padx=5, pady=5, width=5, bg='#FF5D5C')
-                newrow_button = Tk.Button(cred_container_frame, text='➕ New Entry', width=12, bg='#9CCCFF', command=addDummyRow)
+                newrow_button = Tk.Button(cred_container_frame, text='➕ New Entry', command=addDummyRow, width=12, bg='#9CCCFF')
                 index_label.grid(row=row_num, column=0)
                 newrow_button.grid(row=row_num, column=1)
 
                 cred_fields.append([index_label, newrow_button])
                 
-                #Display other utility buttons
+                #Display other utility buttons  
                 
     
     # Mainloop

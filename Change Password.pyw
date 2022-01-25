@@ -1,3 +1,6 @@
+# This is a secondary application which handles the changing of the main
+# login credentials for the application
+
 # IMPORTS
 #######################################################################
 import tkinter as Tk
